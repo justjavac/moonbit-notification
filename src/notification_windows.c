@@ -14,28 +14,31 @@
 #pragma comment(lib, "user32.lib")
 #endif
 
+/* Maps the shared notification level to a stock Windows icon. */
 static HICON desktop_notification_level_icon(int32_t level) {
   switch (level) {
-  case 1:
+  case DESKTOP_NOTIFICATION_LEVEL_WARNING:
     return LoadIconW(NULL, (LPCWSTR)IDI_WARNING);
-  case 2:
+  case DESKTOP_NOTIFICATION_LEVEL_ERROR:
     return LoadIconW(NULL, (LPCWSTR)IDI_ERROR);
   default:
     return LoadIconW(NULL, (LPCWSTR)IDI_INFORMATION);
   }
 }
 
+/* Maps the shared notification level to the matching balloon flag. */
 static DWORD desktop_notification_info_flags(int32_t level) {
   switch (level) {
-  case 1:
+  case DESKTOP_NOTIFICATION_LEVEL_WARNING:
     return NIIF_WARNING;
-  case 2:
+  case DESKTOP_NOTIFICATION_LEVEL_ERROR:
     return NIIF_ERROR;
   default:
     return NIIF_INFO;
   }
 }
 
+/* Converts a UTF-8 string into a newly allocated wide string. */
 static wchar_t *desktop_notification_utf8_to_wide(const char *text) {
   int wide_length = 0;
   wchar_t *wide_text = NULL;
@@ -62,6 +65,13 @@ static wchar_t *desktop_notification_utf8_to_wide(const char *text) {
   return wide_text;
 }
 
+/*
+ * Sends a desktop notification through the legacy Windows shell API.
+ *
+ * The function validates the payload, converts UTF-8 strings to UTF-16, and
+ * uses `IUserNotification` to display a balloon notification with the closest
+ * stock icon for the requested level.
+ */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_windows_show(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level) {
@@ -74,13 +84,13 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_windows_show(
   const wchar_t *tooltip_text = NULL;
   HRESULT hr;
   int initialized = 0;
+  int32_t success = 0;
   IUserNotification *notification = NULL;
-  HICON icon = desktop_notification_level_icon(level);
+  HICON icon = NULL;
 
   (void)window_handle;
 
-  if (title_utf8 == NULL || title_utf8[0] == '\0' || body_utf8 == NULL ||
-      body_utf8[0] == '\0') {
+  if (!desktop_notification_payload_is_valid(title_utf8, body_utf8)) {
     return 0;
   }
   if (desktop_notification_dry_run_enabled()) {
@@ -90,9 +100,7 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_windows_show(
   owned_title_text = desktop_notification_utf8_to_wide(title_utf8);
   owned_body_text = desktop_notification_utf8_to_wide(body_utf8);
   if (owned_title_text == NULL || owned_body_text == NULL) {
-    free(owned_title_text);
-    free(owned_body_text);
-    return 0;
+    goto cleanup;
   }
 
   title_text = owned_title_text;
@@ -103,52 +111,39 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_windows_show(
   if (SUCCEEDED(hr)) {
     initialized = 1;
   } else if (hr != RPC_E_CHANGED_MODE) {
-    free(owned_title_text);
-    free(owned_body_text);
-    return 0;
+    goto cleanup;
   }
 
   hr = CoCreateInstance(&CLSID_UserNotification, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IUserNotification, (void **)&notification);
   if (FAILED(hr) || notification == NULL) {
-    free(owned_title_text);
-    free(owned_body_text);
-    if (initialized) {
-      CoUninitialize();
-    }
-    return 0;
+    goto cleanup;
   }
 
+  icon = desktop_notification_level_icon(level);
   hr = IUserNotification_SetIconInfo(notification, icon, tooltip_text);
   if (FAILED(hr)) {
-    IUserNotification_Release(notification);
-    free(owned_title_text);
-    free(owned_body_text);
-    if (initialized) {
-      CoUninitialize();
-    }
-    return 0;
+    goto cleanup;
   }
 
   hr = IUserNotification_SetBalloonInfo(
       notification, title_text, body_text, desktop_notification_info_flags(level));
   if (FAILED(hr)) {
-    IUserNotification_Release(notification);
-    free(owned_title_text);
-    free(owned_body_text);
-    if (initialized) {
-      CoUninitialize();
-    }
-    return 0;
+    goto cleanup;
   }
 
   hr = IUserNotification_Show(notification, NULL, 5000);
-  IUserNotification_Release(notification);
+  success = SUCCEEDED(hr);
+
+cleanup:
+  if (notification != NULL) {
+    IUserNotification_Release(notification);
+  }
   free(owned_title_text);
   free(owned_body_text);
   if (initialized) {
     CoUninitialize();
   }
-  return SUCCEEDED(hr);
+  return success;
 }
 #endif

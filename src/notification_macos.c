@@ -3,10 +3,19 @@
 #ifdef __APPLE__
 #include <unistd.h>
 
+/*
+ * Returns whether the macOS backend can invoke `/usr/bin/osascript`.
+ */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_is_supported(void) {
   return access("/usr/bin/osascript", X_OK) == 0;
 }
 
+/*
+ * Sends a notification through AppleScript using `/usr/bin/osascript`.
+ *
+ * `window_handle` and `level` are accepted for cross-platform API
+ * compatibility, but the current macOS implementation does not use them.
+ */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_show(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level) {
@@ -28,8 +37,7 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_show(
   (void)window_handle;
   (void)level;
 
-  if (title_text == NULL || title_text[0] == '\0' || body_text == NULL ||
-      body_text[0] == '\0') {
+  if (!desktop_notification_payload_is_valid(title_text, body_text)) {
     return 0;
   }
   if (desktop_notification_dry_run_enabled()) {

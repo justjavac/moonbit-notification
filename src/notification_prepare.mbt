@@ -1,28 +1,18 @@
 ///|
-let notification_name : String = "Lepus"
+let default_notification_title : String = "Lepus"
 
 ///|
 /// Returns the fallback title used when callers omit one.
 fn default_title() -> String {
-  notification_name
-}
-
-///|
-/// Ensures the notification body contains user-facing text.
-fn ensure_body(body : String) -> Result[String, String] {
-  if body.is_empty() {
-    Err("notification body must not be empty")
-  } else {
-    Ok(body)
-  }
+  default_notification_title
 }
 
 ///|
 /// Replaces a missing or empty title with the package default.
 fn resolve_title(title : String?) -> String {
   match title {
-    Some(title) => if title.is_empty() { default_title() } else { title }
-    None => default_title()
+    Some(title) if !title.is_empty() => title
+    _ => default_title()
   }
 }
 
@@ -31,8 +21,9 @@ fn resolve_title(title : String?) -> String {
 fn prepare_notification(
   notification : Notification,
 ) -> Result[(String, String), String] {
-  match ensure_body(notification.body) {
-    Err(error) => Err(error)
-    Ok(body) => Ok((resolve_title(notification.title), body))
+  if notification.body.is_empty() {
+    Err("notification body must not be empty")
+  } else {
+    Ok((resolve_title(notification.title), notification.body))
   }
 }
