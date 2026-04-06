@@ -4,9 +4,9 @@ extern "C" fn notification_set_dry_run_ffi(enabled : Bool) -> Unit = "desktop_no
 
 ///|
 test "private helpers normalize titles and urgency levels" {
-  assert_eq(default_title(), "MoonBit")
-  assert_eq(resolve_title(None), "MoonBit")
-  assert_eq(resolve_title(Some("")), "MoonBit")
+  assert_eq(default_title(), "Lepus")
+  assert_eq(resolve_title(None), "Lepus")
+  assert_eq(resolve_title(Some("")), "Lepus")
   assert_eq(resolve_title(Some("Build")), "Build")
   assert_eq(level_to_native_code(Info), 0)
   assert_eq(level_to_native_code(Warning), 1)
@@ -17,7 +17,7 @@ test "private helpers normalize titles and urgency levels" {
 test "prepare_notification validates body and fills the default title" {
   assert_eq(
     prepare_notification(Notification::new("Artifacts uploaded")),
-    Ok(("MoonBit", "Artifacts uploaded")),
+    Ok((default_title(), "Artifacts uploaded")),
   )
   assert_eq(
     prepare_notification(Notification::new("", title=Some("CI"))),
@@ -30,7 +30,11 @@ test "show_notification_with_window succeeds in dry-run mode" {
   notification_set_dry_run_ffi(true)
   let result = show_notification_with_window(
     42,
-    Notification::new("Build finished", title=Some("MoonBit"), level=Warning),
+    Notification::new(
+      "Build finished",
+      title=Some(default_title()),
+      level=Warning,
+    ),
   )
   notification_set_dry_run_ffi(false)
 

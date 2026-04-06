@@ -18,7 +18,7 @@ pub(all) enum NotificationLevel {
 /// Immutable request object used by `show_notification`.
 ///
 /// Keeping the request as a value makes it easy to validate, reuse, and test.
-/// `title` is optional; when omitted, the package falls back to `"MoonBit"`.
+/// `title` is optional; when omitted, the package falls back to `"Lepus"`.
 /// `body` must be non-empty.
 pub(all) struct Notification {
   title : String?
