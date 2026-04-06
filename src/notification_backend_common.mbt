@@ -1,7 +1,9 @@
 ///|
 /// Converts a MoonBit string into a UTF-8 C string for native FFI calls.
 fn to_cstr(value : String) -> Bytes {
-  @ffi.to_cstr(value)
+  let bytes = @utf8.encode(value).to_array()
+  bytes.push(0)
+  Bytes::from_array(bytes)
 }
 
 ///|

@@ -1,5 +1,5 @@
 import {
-  "justjavac/ffi" @ffi,
+  "moonbitlang/core/encoding/utf8" @utf8,
 }
 
 supported_targets = "native"
