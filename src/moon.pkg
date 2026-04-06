@@ -5,5 +5,10 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "notification_native.c" ],
+  "native-stub": [
+    "notification_common.c",
+    "notification_windows.c",
+    "notification_macos.c",
+    "notification_linux.c",
+  ],
 )
