@@ -20,6 +20,10 @@ The public API is intentionally compact so applications can use one code path
 for all supported operating systems while still receiving platform-aware
 urgency handling.
 
+The MoonBit layer does not branch on the current platform at runtime. It calls
+a single native FFI entry point, and the concrete backend is selected during
+native compilation for Windows, macOS, or Linux.
+
 ## Features
 
 - Works with MoonBit `native` targets on Windows, macOS, and Linux
@@ -90,7 +94,6 @@ When `title` is `None` or an empty string, the package falls back to
 - `show_notification(notification)` sends a pre-built request object.
 - `show_with_window(window_handle, body, title?, level?)` keeps compatibility
   with Windows-oriented call sites that already track a window handle.
-- `current_platform()` reports which backend is active.
 - `is_supported()` and `ensure_supported()` let you probe the runtime before
   delivery.
 

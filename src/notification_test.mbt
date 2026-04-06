@@ -29,8 +29,3 @@ test "ensure_supported stays in sync with is_supported" {
     Err(_) => assert_true(!supported)
   }
 }
-
-///|
-test "current_platform reports a desktop backend in CI targets" {
-  assert_true(@notification.current_platform() != @notification.Unsupported)
-}

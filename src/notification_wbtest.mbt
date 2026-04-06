@@ -11,9 +11,6 @@ test "private helpers normalize titles and urgency levels" {
   assert_eq(level_to_native_code(Info), 0)
   assert_eq(level_to_native_code(Warning), 1)
   assert_eq(level_to_native_code(Error), 2)
-  assert_eq(level_to_linux_urgency(Info), "low")
-  assert_eq(level_to_linux_urgency(Warning), "normal")
-  assert_eq(level_to_linux_urgency(Error), "critical")
 }
 
 ///|

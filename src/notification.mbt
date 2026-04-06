@@ -8,6 +8,9 @@
 /// - Windows uses a native shell notification implementation.
 /// - macOS uses `/usr/bin/osascript`.
 /// - Linux uses `notify-send`.
+///
+/// The MoonBit layer calls a single native entry point; the concrete backend
+/// is selected during native compilation for the host OS.
 pub fn show_notification(notification : Notification) -> Result[Unit, String] {
   show_notification_with_window(0, notification)
 }
@@ -57,13 +60,7 @@ fn show_notification_with_window(
       match prepare_notification(notification) {
         Err(error) => Err(error)
         Ok((title, body)) =>
-          deliver(
-            current_platform(),
-            window_handle,
-            title,
-            body,
-            notification.level,
-          )
+          deliver(window_handle, title, body, notification.level)
       }
   }
 }

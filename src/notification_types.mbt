@@ -15,18 +15,6 @@ pub(all) enum NotificationLevel {
 } derive(Show, Eq)
 
 ///|
-/// Identifies the delivery backend selected for the current native process.
-///
-/// `Unsupported` means the package was compiled for `native`, but the runtime
-/// OS is not one of the currently implemented desktop backends.
-pub(all) enum NotificationPlatform {
-  Windows
-  MacOS
-  Linux
-  Unsupported
-} derive(Show, Eq)
-
-///|
 /// Immutable request object used by `show_notification`.
 ///
 /// Keeping the request as a value makes it easy to validate, reuse, and test.

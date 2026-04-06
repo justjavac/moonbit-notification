@@ -34,16 +34,6 @@ fn level_to_native_code(level : NotificationLevel) -> Int {
 }
 
 ///|
-/// Maps the public severity enum to a Linux urgency string.
-fn level_to_linux_urgency(level : NotificationLevel) -> String {
-  match level {
-    Info => "low"
-    Warning => "normal"
-    Error => "critical"
-  }
-}
-
-///|
 /// Validates a request and returns the normalized title/body pair.
 fn prepare_notification(
   notification : Notification,
