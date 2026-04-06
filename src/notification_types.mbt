@@ -29,6 +29,15 @@ pub(all) struct Notification {
 ///|
 /// Builds a notification value with the same defaults used by the convenience
 /// `show` helper.
+///
+/// This constructor does not perform validation; it simply packages the caller
+/// input so it can be passed around, reused, or tested before delivery.
+/// Validation happens later in `show`, `show_with_window`, and
+/// `show_notification`.
+///
+/// `title` may be omitted or set to `Some("")`, in which case the runtime
+/// delivery path later replaces it with the default application name.
+/// `level` defaults to `Info`.
 pub fn Notification::new(
   body : String,
   title? : String? = None,
