@@ -13,6 +13,7 @@
 #ifdef _MSC_VER
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "user32.lib")
 #endif
 #endif
 
@@ -26,13 +27,22 @@ extern char **environ;
 
 #define DESKTOP_NOTIFICATION_PATH_BUFFER_SIZE 4096
 
+static int32_t desktop_notification_force_dry_run = 0;
+
 static int desktop_notification_dry_run_enabled(void) {
   const char *value = getenv("MOONBIT_NOTIFICATION_DRY_RUN");
+  if (desktop_notification_force_dry_run) {
+    return 1;
+  }
   if (value == NULL) {
     return 0;
   }
   return strcmp(value, "1") == 0 || strcmp(value, "true") == 0 ||
          strcmp(value, "TRUE") == 0;
+}
+
+MOONBIT_FFI_EXPORT void desktop_notification_set_dry_run(int32_t enabled) {
+  desktop_notification_force_dry_run = enabled != 0;
 }
 
 MOONBIT_FFI_EXPORT int32_t desktop_notification_platform(void) {
