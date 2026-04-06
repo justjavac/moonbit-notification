@@ -5,49 +5,23 @@
 [![macos](https://img.shields.io/codecov/c/github/justjavac/moonbit-notification/main?flag=macos&label=macos)](https://codecov.io/gh/justjavac/moonbit-notification)
 [![windows](https://img.shields.io/codecov/c/github/justjavac/moonbit-notification/main?flag=windows&label=windows)](https://codecov.io/gh/justjavac/moonbit-notification)
 
-Cross-platform native desktop notifications for MoonBit.
+`justjavac/notification` is a MoonBit `native` package for sending desktop
+notifications on Windows, macOS, and Linux through one small API.
 
-This package provides a small, readable MoonBit API for sending desktop
-notifications on all three major desktop platforms:
+## Supported Platforms
 
-- Windows uses a native shell notification implementation based on the same
-  Windows-first approach as the reference package in
-  `D:\Code\moonbit-webview\notification`.
-- macOS uses `/usr/bin/osascript`.
-- Linux uses `notify-send`.
+The package is intended for MoonBit `native` targets only.
 
-The public API is intentionally compact so applications can use one code path
-for all supported operating systems while still receiving platform-aware
-urgency handling.
-
-The MoonBit layer does not branch on the current platform at runtime. It calls
-a single native FFI entry point, and the concrete backend is selected during
-native compilation for Windows, macOS, or Linux.
-
-## Features
-
-- Works with MoonBit `native` targets on Windows, macOS, and Linux
-- Keeps the reference package's familiar `show` and `show_with_window` helpers
-- Exposes a reusable `Notification` value type for clearer application code
-- Validates inputs before crossing the FFI boundary
-- Includes black-box tests, white-box tests, and README examples
-- Supports a dry-run mode for non-intrusive automated testing
-
-## Installation
-
-Add the dependency in your `moon.mod.json`:
-
-```json
-{
-  "deps": {
-    "justjavac/notification": "0.1.0"
-  }
-}
-```
-
-This module targets `native` only.
+- Windows: uses a native shell notification implementation through
+  `IUserNotification`
+- macOS: uses `/usr/bin/osascript`
+- Linux: uses `notify-send`
+- Other native platforms: compile, but report the platform as unsupported at
+  runtime
 
 ## Quick Start
+
+The simplest way to send a notification is:
 
 ```moonbit
 let result = @notification.show(
@@ -56,7 +30,7 @@ let result = @notification.show(
 )
 ```
 
-If you want to prepare the request first, use `Notification::new`:
+If you want to construct the request first:
 
 ```moonbit
 let request = @notification.Notification::new(
@@ -64,86 +38,98 @@ let request = @notification.Notification::new(
   title=Some("Release"),
   level=@notification.Warning,
 )
+
 let result = @notification.show_notification(request)
 ```
 
-## API Overview
+For existing Windows-oriented integrations that already keep a native handle:
 
-### `NotificationLevel`
-
-`NotificationLevel` describes the urgency of a notification:
-
-- `Info` for ordinary updates
-- `Warning` for attention-worthy situations
-- `Error` for the strongest urgency supported by the platform
-
-### `Notification`
-
-`Notification` is an immutable request object with three fields:
-
-- `title : String?`
-- `body : String`
-- `level : NotificationLevel`
-
-When `title` is `None` or an empty string, the package falls back to
-`"MoonBit"`. The `body` must be non-empty.
-
-### Core Functions
-
-- `show(body, title?, level?)` is the easiest way to send a notification.
-- `show_notification(notification)` sends a pre-built request object.
-- `show_with_window(window_handle, body, title?, level?)` keeps compatibility
-  with Windows-oriented call sites that already track a window handle.
-- `is_supported()` and `ensure_supported()` let you probe the runtime before
-  delivery.
-
-## Platform Notes
-
-### Windows
-
-The Windows backend follows the native implementation style from the reference
-package and maps `NotificationLevel` to Windows information, warning, and error
-presentation hints.
-
-### macOS
-
-The macOS backend shells out to `/usr/bin/osascript`, which is available on a
-standard macOS installation.
-
-### Linux
-
-The Linux backend calls `notify-send`. On Debian/Ubuntu based systems, install
-it with:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y libnotify-bin
+```moonbit
+let result = @notification.show_with_window(
+  0,
+  "Deployment finished",
+  title=Some("Ops"),
+  level=@notification.Info,
+)
 ```
+
+## Public API
+
+### Types
+
+`NotificationLevel` exposes three urgency hints:
+
+- `Info`
+- `Warning`
+- `Error`
+
+`Notification` is the immutable request type used by the public API:
+
+```moonbit
+pub(all) struct Notification {
+  title : String?
+  body : String
+  level : NotificationLevel
+}
+```
+
+### Functions
+
+- `show(body, title?, level?)`
+  Sends a notification from raw fields.
+- `show_notification(notification)`
+  Sends a pre-built `Notification`.
+- `show_with_window(window_handle, body, title?, level?)`
+  Preserves compatibility with call sites that already track a native window
+  handle.
+- `is_supported()`
+  Reports whether the current runtime can deliver notifications.
+- `ensure_supported()`
+  Converts support probing into `Result[Unit, String]`.
+
+## Behavior Notes
+
+The repository intentionally keeps behavior predictable across platforms.
+
+- `body` must not be empty
+- `title` is optional
+- missing or empty titles fall back to `"Lepus"`
+- urgency is mapped from `NotificationLevel` into backend-specific values
+- validation happens in MoonBit before native delivery is attempted
+
+Current urgency mapping:
+
+- Windows: information, warning, and error icon/flag hints
+- macOS: the level value is accepted by the API, but the `osascript` backend
+  does not currently use it for visual differentiation
+- Linux: `Info -> low`, `Warning -> normal`, `Error -> critical`
 
 ## Testing
 
-The repository includes three layers of verification:
+The repository uses several verification layers:
 
-- black-box API tests in `src/notification_test.mbt`
-- white-box helper tests in `src/notification_wbtest.mbt`
-- executable package examples in `src/README.mbt.md`
+- unit-style black-box tests for public API behavior
+- white-box tests for normalization helpers and urgency mapping
+- a dry-run native path to avoid real notification popups during automated runs
+- GitHub Actions jobs on `ubuntu-latest`, `macos-latest`, and
+  `windows-latest`
 
-To run tests without showing real desktop notifications, either rely on the
-built-in white-box dry-run hook or set:
+Useful commands during development:
+
+```bash
+moon info src --target native
+moon fmt
+moon test --target native
+moon test --target native --enable-coverage
+moon coverage analyze -p notification
+```
+
+To suppress real desktop notifications while testing locally:
 
 ```bash
 MOONBIT_NOTIFICATION_DRY_RUN=1
 ```
 
-Then run:
+## License
 
-```bash
-moon test
-moon coverage analyze -p src
-```
-
-## Development Notes
-
-- Source files live in `src` as requested.
-- The project is licensed under MIT.
-- `moon info`, `moon fmt`, and `moon test` are part of the validation flow.
+MIT
