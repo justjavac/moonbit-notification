@@ -1,3 +1,7 @@
+import {
+  "justjavac/ffi" @ffi,
+}
+
 supported_targets = "native"
 
 options(

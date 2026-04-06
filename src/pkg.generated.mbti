@@ -2,10 +2,40 @@
 package "justjavac/notification"
 
 // Values
+pub fn current_platform() -> NotificationPlatform
+
+pub fn ensure_supported() -> Result[Unit, String]
+
+pub fn is_supported() -> Bool
+
+pub fn show(String, title? : String?, level? : NotificationLevel) -> Result[Unit, String]
+
+pub fn show_notification(Notification) -> Result[Unit, String]
+
+pub fn show_with_window(Int64, String, title? : String?, level? : NotificationLevel) -> Result[Unit, String]
 
 // Errors
 
 // Types and methods
+pub(all) struct Notification {
+  title : String?
+  body : String
+  level : NotificationLevel
+} derive(Eq, Show)
+pub fn Notification::new(String, title? : String?, level? : NotificationLevel) -> Self
+
+pub(all) enum NotificationLevel {
+  Info
+  Warning
+  Error
+} derive(Eq, Show)
+
+pub(all) enum NotificationPlatform {
+  Windows
+  MacOS
+  Linux
+  Unsupported
+} derive(Eq, Show)
 
 // Type aliases
 
