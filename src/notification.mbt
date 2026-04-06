@@ -9,8 +9,8 @@
 /// - macOS uses `/usr/bin/osascript`.
 /// - Linux uses `notify-send`.
 ///
-/// The MoonBit layer calls a single native entry point; the concrete backend
-/// is selected during native compilation for the host OS.
+/// The MoonBit layer selects the concrete backend during compilation with
+/// `#cfg(platform=...)`.
 pub fn show_notification(notification : Notification) -> Result[Unit, String] {
   show_notification_with_window(0, notification)
 }

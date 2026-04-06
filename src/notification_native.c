@@ -134,34 +134,6 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_is_supported(void) {
 #endif
 }
 
-MOONBIT_FFI_EXPORT int32_t desktop_notification_is_supported(void) {
-#ifdef _WIN32
-  return 1;
-#elif defined(__APPLE__)
-  return desktop_notification_macos_is_supported();
-#elif defined(__linux__)
-  return desktop_notification_linux_is_supported();
-#else
-  return 0;
-#endif
-}
-
-MOONBIT_FFI_EXPORT moonbit_bytes_t desktop_notification_support_error(void) {
-#ifdef _WIN32
-  return (moonbit_bytes_t)
-      "desktop notifications are unavailable on the current Windows runtime";
-#elif defined(__APPLE__)
-  return (moonbit_bytes_t)
-      "desktop notifications on macOS require /usr/bin/osascript";
-#elif defined(__linux__)
-  return (moonbit_bytes_t)
-      "desktop notifications on Linux require the notify-send executable";
-#else
-  return (moonbit_bytes_t)
-      "desktop notifications are not supported on this platform";
-#endif
-}
-
 #ifdef _WIN32
 static HICON desktop_notification_level_icon(int32_t level) {
   switch (level) {
@@ -391,21 +363,3 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
   return desktop_notification_run_process(argv);
 }
 #endif
-
-MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
-    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
-    int32_t level) {
-#ifdef _WIN32
-  return desktop_notification_windows_show(window_handle, title, body, level);
-#elif defined(__APPLE__)
-  return desktop_notification_macos_show(window_handle, title, body, level);
-#elif defined(__linux__)
-  return desktop_notification_linux_show(window_handle, title, body, level);
-#else
-  (void)window_handle;
-  (void)title;
-  (void)body;
-  (void)level;
-  return 0;
-#endif
-}
