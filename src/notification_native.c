@@ -118,13 +118,29 @@ static int desktop_notification_find_program(const char *program, char *buffer,
 }
 #endif
 
+MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_is_supported(void) {
+#ifdef __APPLE__
+  return access("/usr/bin/osascript", X_OK) == 0;
+#else
+  return 0;
+#endif
+}
+
+MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_is_supported(void) {
+#ifdef __linux__
+  return desktop_notification_find_program("notify-send", NULL, 0);
+#else
+  return 0;
+#endif
+}
+
 MOONBIT_FFI_EXPORT int32_t desktop_notification_is_supported(void) {
 #ifdef _WIN32
   return 1;
 #elif defined(__APPLE__)
-  return access("/usr/bin/osascript", X_OK) == 0;
+  return desktop_notification_macos_is_supported();
 #elif defined(__linux__)
-  return desktop_notification_find_program("notify-send", NULL, 0);
+  return desktop_notification_linux_is_supported();
 #else
   return 0;
 #endif
@@ -196,10 +212,10 @@ static wchar_t *desktop_notification_utf8_to_wide(const char *text) {
 }
 #endif
 
-MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
+#ifdef _WIN32
+MOONBIT_FFI_EXPORT int32_t desktop_notification_windows_show(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level) {
-#ifdef _WIN32
   const char *title_utf8 = (const char *)title;
   const char *body_utf8 = (const char *)body;
   wchar_t *owned_title_text = NULL;
@@ -291,7 +307,13 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
     CoUninitialize();
   }
   return SUCCEEDED(hr);
-#elif defined(__APPLE__)
+}
+#endif
+
+#ifdef __APPLE__
+MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_show(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level) {
   const char *title_text = (const char *)title;
   const char *body_text = (const char *)body;
   char *const argv[] = {
@@ -321,7 +343,13 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
   }
 
   return desktop_notification_run_process(argv);
-#elif defined(__linux__)
+}
+#endif
+
+#ifdef __linux__
+MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level) {
   char notify_send_path[DESKTOP_NOTIFICATION_PATH_BUFFER_SIZE];
   const char *title_text = (const char *)title;
   const char *body_text = (const char *)body;
@@ -361,6 +389,18 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
   }
 
   return desktop_notification_run_process(argv);
+}
+#endif
+
+MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level) {
+#ifdef _WIN32
+  return desktop_notification_windows_show(window_handle, title, body, level);
+#elif defined(__APPLE__)
+  return desktop_notification_macos_show(window_handle, title, body, level);
+#elif defined(__linux__)
+  return desktop_notification_linux_show(window_handle, title, body, level);
 #else
   (void)window_handle;
   (void)title;
