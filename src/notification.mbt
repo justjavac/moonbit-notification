@@ -79,13 +79,13 @@ fn show_notification_with_window(
   window_handle : Int64,
   notification : Notification,
 ) -> Result[Unit, String] {
-  match ensure_supported() {
-    Err(error) => Err(error)
-    Ok(_) =>
-      match prepare_notification(notification) {
-        Err(error) => Err(error)
-        Ok((title, body)) =>
-          backend_deliver(window_handle, title, body, notification.level)
-      }
+  if !backend_is_supported() {
+    Err(backend_support_error())
+  } else {
+    match prepare_notification(notification) {
+      Err(error) => Err(error)
+      Ok((title, body)) =>
+        backend_deliver(window_handle, title, body, notification.level)
+    }
   }
 }

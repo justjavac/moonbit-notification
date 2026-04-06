@@ -2,10 +2,21 @@
 
 #ifdef __linux__
 
+/*
+ * Returns whether the Linux backend can locate a runnable `notify-send`
+ * executable.
+ */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_is_supported(void) {
   return desktop_notification_find_program("notify-send", NULL, 0);
 }
 
+/*
+ * Sends a notification by spawning `notify-send` with the mapped urgency.
+ *
+ * `window_handle` is ignored on Linux. The shared notification level is
+ * translated into `low`, `normal`, or `critical` before the child process is
+ * started.
+ */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level) {
@@ -17,8 +28,7 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
 
   (void)window_handle;
 
-  if (title_text == NULL || title_text[0] == '\0' || body_text == NULL ||
-      body_text[0] == '\0') {
+  if (!desktop_notification_payload_is_valid(title_text, body_text)) {
     return 0;
   }
   if (!desktop_notification_find_program("notify-send", notify_send_path,
@@ -26,10 +36,10 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
     return 0;
   }
   switch (level) {
-  case 0:
+  case DESKTOP_NOTIFICATION_LEVEL_INFO:
     urgency_text = "low";
     break;
-  case 2:
+  case DESKTOP_NOTIFICATION_LEVEL_ERROR:
     urgency_text = "critical";
     break;
   default:

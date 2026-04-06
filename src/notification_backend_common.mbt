@@ -17,6 +17,15 @@ fn level_to_native_code(level : NotificationLevel) -> Int {
 }
 
 ///|
+let backend_kind_windows : Int = 1
+
+///|
+let backend_kind_macos : Int = 2
+
+///|
+let backend_kind_linux : Int = 3
+
+///|
 /// Returns the backend selected by the native build.
 extern "C" fn notification_backend_kind_ffi() -> Int = "desktop_notification_backend_kind"
 
@@ -43,11 +52,15 @@ fn backend_is_supported() -> Bool {
 ///|
 /// Returns the support error for the active native backend.
 fn backend_support_error() -> String {
-  match notification_backend_kind_ffi() {
-    1 => "desktop notifications are unavailable on the current Windows runtime"
-    2 => "desktop notifications on macOS require /usr/bin/osascript"
-    3 => "desktop notifications on Linux require the notify-send executable"
-    _ => "desktop notifications are not supported on this platform"
+  let backend_kind = notification_backend_kind_ffi()
+  if backend_kind == backend_kind_windows {
+    "desktop notifications are unavailable on the current Windows runtime"
+  } else if backend_kind == backend_kind_macos {
+    "desktop notifications on macOS require /usr/bin/osascript"
+  } else if backend_kind == backend_kind_linux {
+    "desktop notifications on Linux require the notify-send executable"
+  } else {
+    "desktop notifications are not supported on this platform"
   }
 }
 

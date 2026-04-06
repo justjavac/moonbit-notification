@@ -35,9 +35,16 @@ pub(all) struct Notification {
 /// Validation happens later in `show`, `show_with_window`, and
 /// `show_notification`.
 ///
+/// `body` is stored exactly as provided and is expected to contain the
+/// user-facing message text. `title` may be omitted when the caller wants the
+/// runtime delivery path to inject the package default title. `level` defaults
+/// to `Info`.
+///
 /// `title` may be omitted or set to `Some("")`, in which case the runtime
 /// delivery path later replaces it with the default application name.
-/// `level` defaults to `Info`.
+///
+/// Returns a reusable `Notification` value that can be passed to
+/// `show_notification`, cached for later delivery, or inspected in tests.
 pub fn Notification::new(
   body : String,
   title? : String? = None,
