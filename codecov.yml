@@ -1,0 +1,36 @@
+codecov:
+  notify:
+    after_n_builds: 3
+    wait_for_ci: true
+
+comment:
+  after_n_builds: 3
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+      linux:
+        flags:
+          - linux
+      macos:
+        flags:
+          - macos
+      windows:
+        flags:
+          - windows
+
+flags:
+  linux:
+    paths:
+      - src/
+    after_n_builds: 3
+  macos:
+    paths:
+      - src/
+    after_n_builds: 3
+  windows:
+    paths:
+      - src/
+    after_n_builds: 3
