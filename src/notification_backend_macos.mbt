@@ -1,25 +1,25 @@
 ///|
 /// Returns whether the macOS backend can launch `osascript`.
-#cfg(platform="macos")
+#cfg(any(platform="macos", platform="darwin"))
 extern "C" fn notification_macos_is_supported_ffi() -> Bool = "desktop_notification_macos_is_supported"
 
 ///|
 /// Returns whether the current macOS build can attempt to deliver a notification.
-#cfg(platform="macos")
+#cfg(any(platform="macos", platform="darwin"))
 fn backend_is_supported() -> Bool {
   notification_macos_is_supported_ffi()
 }
 
 ///|
 /// Returns the support error for the macOS backend.
-#cfg(platform="macos")
+#cfg(any(platform="macos", platform="darwin"))
 fn backend_support_error() -> String {
   "desktop notifications on macOS require /usr/bin/osascript"
 }
 
 ///|
 /// Invokes the macOS backend selected at compile time.
-#cfg(platform="macos")
+#cfg(any(platform="macos", platform="darwin"))
 #borrow(title, body)
 extern "C" fn show_notification_macos_ffi(
   window_handle : Int64,
@@ -30,7 +30,7 @@ extern "C" fn show_notification_macos_ffi(
 
 ///|
 /// Executes the macOS backend and normalizes native failures.
-#cfg(platform="macos")
+#cfg(any(platform="macos", platform="darwin"))
 fn backend_deliver(
   window_handle : Int64,
   title : String,

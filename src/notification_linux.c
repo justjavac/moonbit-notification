@@ -13,16 +13,7 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
   const char *title_text = (const char *)title;
   const char *body_text = (const char *)body;
   const char *urgency_text = "normal";
-  char *const argv[] = {
-      notify_send_path,
-      "--app-name",
-      (char *)DESKTOP_NOTIFICATION_APP_NAME,
-      "--urgency",
-      (char *)urgency_text,
-      (char *)title_text,
-      (char *)body_text,
-      NULL,
-  };
+  char *argv[8];
 
   (void)window_handle;
 
@@ -45,7 +36,16 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_linux_show(
     urgency_text = "normal";
     break;
   }
+
+  argv[0] = notify_send_path;
+  argv[1] = "--app-name";
+  argv[2] = (char *)DESKTOP_NOTIFICATION_APP_NAME;
+  argv[3] = "--urgency";
   argv[4] = (char *)urgency_text;
+  argv[5] = (char *)title_text;
+  argv[6] = (char *)body_text;
+  argv[7] = NULL;
+
   if (desktop_notification_dry_run_enabled()) {
     return 1;
   }
