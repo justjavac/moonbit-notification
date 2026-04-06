@@ -34,6 +34,48 @@ MOONBIT_FFI_EXPORT void desktop_notification_set_dry_run(int32_t enabled) {
   desktop_notification_force_dry_run = enabled != 0;
 }
 
+MOONBIT_FFI_EXPORT int32_t desktop_notification_backend_kind(void) {
+#if defined(_WIN32)
+  return 1;
+#elif defined(__APPLE__)
+  return 2;
+#elif defined(__linux__)
+  return 3;
+#else
+  return 0;
+#endif
+}
+
+MOONBIT_FFI_EXPORT int32_t desktop_notification_is_supported(void) {
+#if defined(_WIN32)
+  return 1;
+#elif defined(__APPLE__)
+  return desktop_notification_macos_is_supported();
+#elif defined(__linux__)
+  return desktop_notification_linux_is_supported();
+#else
+  return 0;
+#endif
+}
+
+MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level) {
+#if defined(_WIN32)
+  return desktop_notification_windows_show(window_handle, title, body, level);
+#elif defined(__APPLE__)
+  return desktop_notification_macos_show(window_handle, title, body, level);
+#elif defined(__linux__)
+  return desktop_notification_linux_show(window_handle, title, body, level);
+#else
+  (void)window_handle;
+  (void)title;
+  (void)body;
+  (void)level;
+  return 0;
+#endif
+}
+
 #if defined(__APPLE__) || defined(__linux__)
 int desktop_notification_run_process(char *const argv[]) {
   pid_t pid = 0;
