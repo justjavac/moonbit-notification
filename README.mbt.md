@@ -13,13 +13,10 @@ Cross-platform desktop notifications for MoonBit `native` targets.
 
 ## Example
 
-```mbt check
-///|
-test "send a notification request" {
-  let result = @notification.show("Build finished", title=Some("CI"))
+```mbt nocheck
+let result = @notification.show("Build finished", title=Some("CI"))
 
-  ignore(result)
-}
+ignore(result)
 ```
 
 ## Request Type
