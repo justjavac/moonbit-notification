@@ -27,16 +27,6 @@ fn resolve_title(title : String?) -> String {
 }
 
 ///|
-/// Maps the public severity enum to the native integer level used by the backends.
-fn level_to_native_code(level : NotificationLevel) -> Int {
-  match level {
-    Info => 0
-    Warning => 1
-    Error => 2
-  }
-}
-
-///|
 /// Validates a request and returns the normalized title/body pair.
 fn prepare_notification(
   notification : Notification,
