@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "justjavac/notification"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub fn ensure_supported() -> Result[Unit, String]
 
@@ -19,14 +23,14 @@ pub(all) struct Notification {
   title : String?
   body : String
   level : NotificationLevel
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Notification::new(String, title? : String?, level? : NotificationLevel) -> Self
 
 pub(all) enum NotificationLevel {
   Info
   Warning
   Error
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

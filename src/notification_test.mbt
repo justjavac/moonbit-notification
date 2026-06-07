@@ -3,20 +3,18 @@ test "Notification::new preserves explicit fields" {
   let request = @notification.Notification::new(
     "Deployment finished",
     title=Some("CI"),
-    level=@notification.Error,
+    level=Error,
   )
 
-  assert_eq(request.title, Some("CI"))
+  assert_true(request.title == Some("CI"))
   assert_eq(request.body, "Deployment finished")
-  assert_eq(request.level, @notification.Error)
+  assert_true(request.level == Error)
 }
 
 ///|
 test "show rejects an empty body before calling native code" {
-  assert_eq(
-    @notification.show("", title=Some("CI")),
-    Err("notification body must not be empty"),
-  )
+  let result = @notification.show("", title=Some("CI"))
+  assert_true(result == Err("notification body must not be empty"))
 }
 
 ///|

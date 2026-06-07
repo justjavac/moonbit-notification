@@ -15,14 +15,14 @@ test "private helpers normalize titles and urgency levels" {
 
 ///|
 test "prepare_notification validates body and fills the default title" {
-  assert_eq(
-    prepare_notification(Notification::new("Artifacts uploaded")),
-    Ok((default_title(), "Artifacts uploaded")),
+  let valid_result = prepare_notification(
+    Notification::new("Artifacts uploaded"),
   )
-  assert_eq(
-    prepare_notification(Notification::new("", title=Some("CI"))),
-    Err("notification body must not be empty"),
+  assert_true(valid_result == Ok((default_title(), "Artifacts uploaded")))
+  let invalid_result = prepare_notification(
+    Notification::new("", title=Some("CI")),
   )
+  assert_true(invalid_result == Err("notification body must not be empty"))
 }
 
 ///|
@@ -38,5 +38,5 @@ test "show_notification_with_window succeeds in dry-run mode" {
   )
   notification_set_dry_run_ffi(false)
 
-  assert_eq(result, Ok(()))
+  assert_true(result == Ok(()))
 }

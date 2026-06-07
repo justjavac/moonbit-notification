@@ -12,7 +12,7 @@ pub(all) enum NotificationLevel {
   Info
   Warning
   Error
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 /// Immutable request object used by `show_notification`.
@@ -24,7 +24,7 @@ pub(all) struct Notification {
   title : String?
   body : String
   level : NotificationLevel
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 /// Builds a notification value with the same defaults used by the convenience
