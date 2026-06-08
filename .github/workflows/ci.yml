@@ -106,7 +106,7 @@ jobs:
           moon coverage analyze -p notification -- -f cobertura -o "${{ matrix.coverage_file }}"
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           use_oidc: true
           files: ./${{ matrix.coverage_file }}
