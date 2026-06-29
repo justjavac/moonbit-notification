@@ -17,12 +17,15 @@ fn level_to_native_code(level : NotificationLevel) -> Int {
 }
 
 ///|
+/// Native backend identifier for the Windows shell notification path.
 let backend_kind_windows : Int = 1
 
 ///|
+/// Native backend identifier for the macOS `osascript` path.
 let backend_kind_macos : Int = 2
 
 ///|
+/// Native backend identifier for the Linux `notify-send` path.
 let backend_kind_linux : Int = 3
 
 ///|

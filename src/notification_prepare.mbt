@@ -1,4 +1,5 @@
 ///|
+/// Fallback title injected when a request omits or empties its own title.
 let default_notification_title : String = "Lepus"
 
 ///|

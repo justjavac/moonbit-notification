@@ -22,6 +22,16 @@
 /// Returns `Err(...)` when notifications are unsupported on the current
 /// runtime, when the request body is empty, or when the native backend reports
 /// a failure.
+///
+/// # Example
+/// ```mbt nocheck
+/// let request = @notification.Notification::new(
+///   "Build finished",
+///   title=Some("CI"),
+///   level=@notification.NotificationLevel::Info,
+/// )
+/// let _ = @notification.show_notification(request)
+/// ```
 pub fn show_notification(notification : Notification) -> Result[Unit, String] {
   show_notification_with_window(0, notification)
 }
@@ -39,6 +49,19 @@ pub fn show_notification(notification : Notification) -> Result[Unit, String] {
 ///
 /// Returns `Ok(())` when the notification is accepted by the native backend.
 /// Returns `Err(...)` with the same failure reasons as `show_notification`.
+///
+/// # Example
+/// ```mbt nocheck
+/// // Title defaults to the package name; level defaults to `Info`.
+/// let _ = @notification.show("Download complete")
+///
+/// // Or provide a title and raise the severity.
+/// let _ = @notification.show(
+///   "Disk almost full",
+///   title=Some("Storage"),
+///   level=@notification.NotificationLevel::Warning,
+/// )
+/// ```
 pub fn show(
   body : String,
   title? : String? = None,
@@ -61,6 +84,12 @@ pub fn show(
 ///
 /// Returns `Ok(())` on successful delivery and `Err(...)` when validation,
 /// support checks, or backend execution fails.
+///
+/// # Example
+/// ```mbt nocheck
+/// // `window_handle` is forwarded to the Windows backend and ignored elsewhere.
+/// let _ = @notification.show_with_window(0L, "Render finished")
+/// ```
 pub fn show_with_window(
   window_handle : Int64,
   body : String,

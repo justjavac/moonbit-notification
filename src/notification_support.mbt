@@ -8,6 +8,13 @@
 /// This function is a lightweight probe that does not attempt to show a
 /// notification. It returns `true` only when the active backend believes a
 /// delivery attempt can be made right now.
+///
+/// # Example
+/// ```mbt check
+/// test "is_supported probes capability without delivering" {
+///   let _ : Bool = is_supported()
+/// }
+/// ```
 pub fn is_supported() -> Bool {
   backend_is_supported()
 }
@@ -21,6 +28,16 @@ pub fn is_supported() -> Bool {
 /// Returns `Ok(())` when `is_supported()` is `true`. Otherwise it returns
 /// `Err(message)` where `message` describes the missing platform capability,
 /// such as an unavailable runtime service or required executable.
+///
+/// # Example
+/// ```mbt check
+/// test "ensure_supported reports a reason when unavailable" {
+///   match ensure_supported() {
+///     Ok(_) => ()
+///     Err(message) => assert_true(!message.is_empty())
+///   }
+/// }
+/// ```
 pub fn ensure_supported() -> Result[Unit, String] {
   if is_supported() {
     Ok(())

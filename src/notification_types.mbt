@@ -45,6 +45,15 @@ pub(all) struct Notification {
 ///
 /// Returns a reusable `Notification` value that can be passed to
 /// `show_notification`, cached for later delivery, or inspected in tests.
+///
+/// # Example
+/// ```mbt check
+/// test "Notification::new packages fields without validating" {
+///   let request = Notification::new("Body text", title=Some("Title"))
+///   assert_eq(request.body, "Body text")
+///   assert_true(request.title is Some("Title"))
+/// }
+/// ```
 pub fn Notification::new(
   body : String,
   title? : String? = None,
