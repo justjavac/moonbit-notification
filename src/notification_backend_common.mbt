@@ -29,40 +29,21 @@ let backend_kind_macos : Int = 2
 let backend_kind_linux : Int = 3
 
 ///|
-/// Native delivery completed successfully.
-let delivery_status_ok : Int = 0
-
-///|
-/// The current platform has no notification backend.
-let delivery_status_unsupported : Int = 1
-
-///|
-/// The selected platform backend is unavailable at runtime.
-let delivery_status_backend_unavailable : Int = 2
-
-///|
-/// App Notification delivery requires an identified application bundle.
-let delivery_status_app_identity_required : Int = 3
-
-///|
-/// The user denied application notification authorization.
-let delivery_status_authorization_denied : Int = 4
-
-///|
-/// Application notification authorization could not be determined.
-let delivery_status_authorization_failed : Int = 5
-
-///|
-/// UserNotifications rejected the notification request.
-let delivery_status_scheduling_failed : Int = 6
-
-///|
-/// The selected native delivery operation failed.
-let delivery_status_delivery_failed : Int = 7
-
-///|
-/// UserNotifications is unavailable on the current macOS runtime.
-let delivery_status_app_backend_unavailable : Int = 8
+/// Status returned across the native FFI seam.
+///
+/// The variants are ordered to match `DESKTOP_NOTIFICATION_STATUS_*` in
+/// `notification_native.h`.
+priv enum DeliveryStatus {
+  Success = 0
+  Unsupported
+  BackendUnavailable
+  AppIdentityRequired
+  AuthorizationDenied
+  AuthorizationFailed
+  SchedulingFailed
+  DeliveryFailed
+  AppBackendUnavailable
+}
 
 ///|
 /// Returns the backend selected by the native build.
@@ -70,7 +51,7 @@ extern "C" fn notification_backend_kind_ffi() -> Int = "desktop_notification_bac
 
 ///|
 /// Returns whether the current runtime can deliver notifications.
-extern "C" fn notification_support_status_ffi() -> Int = "desktop_notification_support_status"
+extern "C" fn notification_support_status_ffi() -> DeliveryStatus = "desktop_notification_support_status"
 
 ///|
 /// Invokes the native backend selected at compile time.
@@ -80,7 +61,7 @@ extern "C" fn show_notification_ffi(
   title : Bytes,
   body : Bytes,
   level : Int,
-) -> Int = "desktop_notification_show"
+) -> DeliveryStatus = "desktop_notification_show"
 
 ///|
 /// Invokes the app-oriented native backend.
@@ -90,7 +71,7 @@ extern "C" fn show_app_notification_ffi(
   title : Bytes,
   body : Bytes,
   level : Int,
-) -> Int = "desktop_notification_show_app"
+) -> DeliveryStatus = "desktop_notification_show_app"
 
 ///|
 /// Invokes the command-line-oriented native backend.
@@ -100,12 +81,12 @@ extern "C" fn show_cli_notification_ffi(
   title : Bytes,
   body : Bytes,
   level : Int,
-) -> Int = "desktop_notification_show_cli"
+) -> DeliveryStatus = "desktop_notification_show_cli"
 
 ///|
 /// Returns whether the current build/runtime can attempt to deliver a notification.
 fn backend_is_supported() -> Bool {
-  notification_support_status_ffi() == delivery_status_ok
+  notification_support_status_ffi() is Success
 }
 
 ///|
@@ -116,34 +97,29 @@ fn backend_support_error() -> String {
 
 ///|
 /// Maps native delivery status into stable public error text.
-fn delivery_error(status : Int) -> String {
+fn delivery_error(status : DeliveryStatus) -> String {
   let backend_kind = notification_backend_kind_ffi()
-  if status == delivery_status_backend_unavailable {
-    if backend_kind == backend_kind_windows {
-      "desktop notifications are unavailable on the current Windows runtime"
-    } else if backend_kind == backend_kind_macos {
-      "CLI notifications on macOS require /usr/bin/osascript"
-    } else if backend_kind == backend_kind_linux {
-      "desktop notifications on Linux require the notify-send executable"
-    } else {
-      "desktop notifications are not supported on this platform"
-    }
-  } else if status == delivery_status_app_identity_required {
-    "App Notifications on macOS require an identified .app bundle"
-  } else if status == delivery_status_authorization_denied {
-    "App Notification authorization was denied"
-  } else if status == delivery_status_authorization_failed {
-    "App Notification authorization could not be determined"
-  } else if status == delivery_status_scheduling_failed {
-    "macOS failed to schedule the App Notification"
-  } else if status == delivery_status_app_backend_unavailable {
-    "App Notifications require UserNotifications on macOS 10.14 or later"
-  } else if status == delivery_status_delivery_failed {
-    "native notification delivery failed"
-  } else if status == delivery_status_unsupported {
-    "desktop notifications are not supported on this platform"
-  } else {
-    "native notification delivery failed"
+  match status {
+    BackendUnavailable =>
+      if backend_kind == backend_kind_windows {
+        "desktop notifications are unavailable on the current Windows runtime"
+      } else if backend_kind == backend_kind_macos {
+        "CLI notifications on macOS require /usr/bin/osascript"
+      } else if backend_kind == backend_kind_linux {
+        "desktop notifications on Linux require the notify-send executable"
+      } else {
+        "desktop notifications are not supported on this platform"
+      }
+    AppIdentityRequired =>
+      "App Notifications on macOS require an identified .app bundle"
+    AuthorizationDenied => "App Notification authorization was denied"
+    AuthorizationFailed =>
+      "App Notification authorization could not be determined"
+    SchedulingFailed => "macOS failed to schedule the App Notification"
+    AppBackendUnavailable =>
+      "App Notifications require UserNotifications on macOS 10.14 or later"
+    Unsupported => "desktop notifications are not supported on this platform"
+    Success | DeliveryFailed => "native notification delivery failed"
   }
 }
 
@@ -161,10 +137,9 @@ fn backend_deliver(
     to_cstr(body),
     level_to_native_code(level),
   )
-  if status == delivery_status_ok {
-    Ok(())
-  } else {
-    Err(delivery_error(status))
+  match status {
+    Success => Ok(())
+    _ => Err(delivery_error(status))
   }
 }
 
@@ -182,10 +157,9 @@ fn backend_deliver_app(
     to_cstr(body),
     level_to_native_code(level),
   )
-  if status == delivery_status_ok {
-    Ok(())
-  } else {
-    Err(delivery_error(status))
+  match status {
+    Success => Ok(())
+    _ => Err(delivery_error(status))
   }
 }
 
@@ -203,10 +177,9 @@ fn backend_deliver_cli(
     to_cstr(body),
     level_to_native_code(level),
   )
-  if status == delivery_status_ok {
-    Ok(())
-  } else {
-    Err(delivery_error(status))
+  match status {
+    Success => Ok(())
+    _ => Err(delivery_error(status))
   }
 }
 

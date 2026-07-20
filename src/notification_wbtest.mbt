@@ -53,31 +53,31 @@ test "all delivery paths succeed in dry-run mode" {
 ///|
 test "native delivery status maps to stable errors" {
   assert_eq(
-    delivery_error(delivery_status_app_identity_required),
+    delivery_error(AppIdentityRequired),
     "App Notifications on macOS require an identified .app bundle",
   )
   assert_eq(
-    delivery_error(delivery_status_authorization_denied),
+    delivery_error(AuthorizationDenied),
     "App Notification authorization was denied",
   )
   assert_eq(
-    delivery_error(delivery_status_scheduling_failed),
+    delivery_error(SchedulingFailed),
     "macOS failed to schedule the App Notification",
   )
   assert_eq(
-    delivery_error(delivery_status_authorization_failed),
+    delivery_error(AuthorizationFailed),
     "App Notification authorization could not be determined",
   )
   assert_eq(
-    delivery_error(delivery_status_app_backend_unavailable),
+    delivery_error(AppBackendUnavailable),
     "App Notifications require UserNotifications on macOS 10.14 or later",
   )
   assert_eq(
-    delivery_error(delivery_status_delivery_failed),
+    delivery_error(DeliveryFailed),
     "native notification delivery failed",
   )
   assert_eq(
-    delivery_error(delivery_status_unsupported),
+    delivery_error(Unsupported),
     "desktop notifications are not supported on this platform",
   )
 }
