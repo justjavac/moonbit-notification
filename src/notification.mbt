@@ -12,11 +12,14 @@
 /// - It dispatches the normalized request to the platform backend:
 ///
 /// - Windows uses a native shell notification implementation.
-/// - macOS uses `/usr/bin/osascript`.
+/// - macOS uses UserNotifications for an identified app and `/usr/bin/osascript`
+///   for an unbundled command-line process.
 /// - Linux uses `notify-send`.
 ///
-/// The MoonBit layer selects the concrete backend during compilation with
-/// `#cfg(platform=...)`.
+/// The shared native dispatcher selects the concrete platform backend during
+/// compilation. `delivery` defaults to `Auto`; on macOS that mode selects the
+/// delivery path at runtime from the host application identity. `App` forces
+/// UserNotifications, while `Cli` forces `/usr/bin/osascript`.
 ///
 /// Returns `Ok(())` when the backend reports a successful delivery attempt.
 /// Returns `Err(...)` when notifications are unsupported on the current
@@ -32,8 +35,11 @@
 /// )
 /// let _ = @notification.show_notification(request)
 /// ```
-pub fn show_notification(notification : Notification) -> Result[Unit, String] {
-  show_notification_with_window(0, notification)
+pub fn show_notification(
+  notification : Notification,
+  delivery? : NotificationDelivery = Auto,
+) -> Result[Unit, String] {
+  show_notification_with_window(0, notification, delivery)
 }
 
 ///|
@@ -45,7 +51,8 @@ pub fn show_notification(notification : Notification) -> Result[Unit, String] {
 /// `body` must not be empty. When `title` is omitted or provided as an empty
 /// string, the package falls back to `"Lepus"`. The `level` value is treated
 /// as a cross-platform severity hint and is mapped to the closest urgency or
-/// emphasis level supported by the active backend.
+/// emphasis level supported by the active backend. `delivery` defaults to
+/// `Auto` and may be set to `App` or `Cli` to select a path explicitly.
 ///
 /// Returns `Ok(())` when the notification is accepted by the native backend.
 /// Returns `Err(...)` with the same failure reasons as `show_notification`.
@@ -66,8 +73,9 @@ pub fn show(
   body : String,
   title? : String? = None,
   level? : NotificationLevel = Info,
+  delivery? : NotificationDelivery = Auto,
 ) -> Result[Unit, String] {
-  show_notification(Notification::new(body, title~, level~))
+  show_notification(Notification::new(body, title~, level~), delivery~)
 }
 
 ///|
@@ -95,10 +103,12 @@ pub fn show_with_window(
   body : String,
   title? : String? = None,
   level? : NotificationLevel = Info,
+  delivery? : NotificationDelivery = Auto,
 ) -> Result[Unit, String] {
   show_notification_with_window(
     window_handle,
     Notification::new(body, title~, level~),
+    delivery,
   )
 }
 
@@ -107,14 +117,21 @@ pub fn show_with_window(
 fn show_notification_with_window(
   window_handle : Int64,
   notification : Notification,
+  delivery : NotificationDelivery,
 ) -> Result[Unit, String] {
-  if !backend_is_supported() {
+  if delivery == Auto && !backend_is_supported() {
     Err(backend_support_error())
   } else {
     match prepare_notification(notification) {
       Err(error) => Err(error)
       Ok((title, body)) =>
-        backend_deliver(window_handle, title, body, notification.level)
+        backend_deliver_with_mode(
+          window_handle,
+          title,
+          body,
+          notification.level,
+          delivery,
+        )
     }
   }
 }

@@ -15,6 +15,15 @@
 #define DESKTOP_NOTIFICATION_BACKEND_WINDOWS 1
 #define DESKTOP_NOTIFICATION_BACKEND_MACOS 2
 #define DESKTOP_NOTIFICATION_BACKEND_LINUX 3
+#define DESKTOP_NOTIFICATION_STATUS_OK 0
+#define DESKTOP_NOTIFICATION_STATUS_UNSUPPORTED 1
+#define DESKTOP_NOTIFICATION_STATUS_BACKEND_UNAVAILABLE 2
+#define DESKTOP_NOTIFICATION_STATUS_APP_IDENTITY_REQUIRED 3
+#define DESKTOP_NOTIFICATION_STATUS_AUTHORIZATION_DENIED 4
+#define DESKTOP_NOTIFICATION_STATUS_AUTHORIZATION_FAILED 5
+#define DESKTOP_NOTIFICATION_STATUS_SCHEDULING_FAILED 6
+#define DESKTOP_NOTIFICATION_STATUS_DELIVERY_FAILED 7
+#define DESKTOP_NOTIFICATION_STATUS_APP_BACKEND_UNAVAILABLE 8
 
 /* Returns nonzero when dry-run mode is enabled for the native layer. */
 int desktop_notification_dry_run_enabled(void);
@@ -38,15 +47,27 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_backend_kind(void);
  */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_is_supported(void);
 
+/* Returns a DESKTOP_NOTIFICATION_STATUS_* value for the automatic path. */
+MOONBIT_FFI_EXPORT int32_t desktop_notification_support_status(void);
+
 /*
  * Dispatches a notification through the backend selected for the current
  * platform.
  *
  * `title` and `body` are expected to be UTF-8 strings terminated by a trailing
- * zero byte. The function returns nonzero on success and zero on validation or
- * backend failure.
+ * zero byte. The function returns a DESKTOP_NOTIFICATION_STATUS_* value.
  */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level);
+
+/* Uses the platform's app-oriented delivery path when it has one. */
+MOONBIT_FFI_EXPORT int32_t desktop_notification_show_app(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level);
+
+/* Uses the platform's command-line delivery path when it has one. */
+MOONBIT_FFI_EXPORT int32_t desktop_notification_show_cli(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level);
 
@@ -68,18 +89,24 @@ int desktop_notification_run_process(char *const argv[]);
 #endif
 
 #ifdef __APPLE__
-/*
- * Returns whether the macOS backend can run `/usr/bin/osascript` right now.
- */
+/* Returns whether automatic macOS delivery can currently be attempted. */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_is_supported(void);
 
-/*
- * Sends a notification through AppleScript by invoking `/usr/bin/osascript`.
- *
- * The backend ignores `window_handle` and currently treats `level` as an API
- * compatibility field rather than a visual styling input.
- */
+/* Returns support status for automatic macOS delivery selection. */
+int32_t desktop_notification_macos_support_status(void);
+
+/* Selects UserNotifications or osascript from the host application identity. */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_macos_show(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level);
+
+/* Sends through UserNotifications for an identified macOS application. */
+int32_t desktop_notification_macos_show_app(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level);
+
+/* Sends through osascript for an unbundled macOS command-line process. */
+int32_t desktop_notification_macos_show_cli(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level);
 #endif

@@ -10,11 +10,11 @@ pub fn ensure_supported() -> Result[Unit, String]
 
 pub fn is_supported() -> Bool
 
-pub fn show(String, title? : String?, level? : NotificationLevel) -> Result[Unit, String]
+pub fn show(String, title? : String?, level? : NotificationLevel, delivery? : NotificationDelivery) -> Result[Unit, String]
 
-pub fn show_notification(Notification) -> Result[Unit, String]
+pub fn show_notification(Notification, delivery? : NotificationDelivery) -> Result[Unit, String]
 
-pub fn show_with_window(Int64, String, title? : String?, level? : NotificationLevel) -> Result[Unit, String]
+pub fn show_with_window(Int64, String, title? : String?, level? : NotificationLevel, delivery? : NotificationDelivery) -> Result[Unit, String]
 
 // Errors
 
@@ -25,6 +25,12 @@ pub(all) struct Notification {
   level : NotificationLevel
 } derive(Eq, @debug.Debug)
 pub fn Notification::new(String, title? : String?, level? : NotificationLevel) -> Self
+
+pub(all) enum NotificationDelivery {
+  Auto
+  App
+  Cli
+} derive(Eq, @debug.Debug)
 
 pub(all) enum NotificationLevel {
   Info

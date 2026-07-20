@@ -15,6 +15,22 @@ pub(all) enum NotificationLevel {
 } derive(Debug, Eq)
 
 ///|
+/// Selects how a notification is delivered.
+///
+/// - `Auto` lets the platform backend choose the appropriate delivery path.
+/// - `App` requests app-oriented delivery. On macOS this uses
+///   UserNotifications and requires an identified `.app` bundle.
+/// - `Cli` requests command-line delivery. On macOS this uses `osascript`.
+///
+/// Windows and Linux currently have one delivery path each, so all three modes
+/// use that platform's normal backend.
+pub(all) enum NotificationDelivery {
+  Auto
+  App
+  Cli
+} derive(Debug, Eq)
+
+///|
 /// Immutable request object used by `show_notification`.
 ///
 /// Keeping the request as a value makes it easy to validate, reuse, and test.

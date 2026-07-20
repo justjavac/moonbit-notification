@@ -14,7 +14,8 @@ The package is intended for MoonBit `native` targets only.
 
 - Windows: uses a native shell notification implementation through
   `IUserNotification`
-- macOS: uses `/usr/bin/osascript`
+- macOS App Notification: uses Apple's UserNotifications framework
+- macOS CLI Notification: uses `/usr/bin/osascript`
 - Linux: uses `notify-send`
 - Other native platforms: compile, but report the platform as unsupported at
   runtime
@@ -27,6 +28,24 @@ The simplest way to send a notification is:
 let result = @notification.show(
   "Build finished successfully",
   title=Some("CI"),
+)
+```
+
+On macOS, the existing entry points choose the delivery path automatically. An
+identified `.app` uses UserNotifications; an unbundled command-line process uses
+`osascript`. Use the optional `delivery` argument to select a path explicitly:
+
+```moonbit
+let app_result = @notification.show(
+  "Artifacts uploaded",
+  title=Some("Release"),
+  delivery=@notification.App,
+)
+
+let cli_result = @notification.show(
+  "Artifacts uploaded",
+  title=Some("Release"),
+  delivery=@notification.Cli,
 )
 ```
 
@@ -63,6 +82,12 @@ let result = @notification.show_with_window(
 - `Warning`
 - `Error`
 
+`NotificationDelivery` selects a delivery path:
+
+- `Auto` (default)
+- `App`
+- `Cli`
+
 `Notification` is the immutable request type used by the public API:
 
 ```moonbit
@@ -75,11 +100,11 @@ pub(all) struct Notification {
 
 ### Functions
 
-- `show(body, title?, level?)`
+- `show(body, title?, level?, delivery?)`
   Sends a notification from raw fields.
-- `show_notification(notification)`
+- `show_notification(notification, delivery?)`
   Sends a pre-built `Notification`.
-- `show_with_window(window_handle, body, title?, level?)`
+- `show_with_window(window_handle, body, title?, level?, delivery?)`
   Preserves compatibility with call sites that already track a native window
   handle.
 - `is_supported()`
@@ -95,14 +120,27 @@ The repository intentionally keeps behavior predictable across platforms.
 - `title` is optional
 - missing or empty titles fall back to `"Lepus"`
 - urgency is mapped from `NotificationLevel` into backend-specific values
+- delivery defaults to `Auto`; `App` and `Cli` select a path explicitly
 - validation happens in MoonBit before native delivery is attempted
 
 Current urgency mapping:
 
 - Windows: information, warning, and error icon/flag hints
-- macOS: the level value is accepted by the API, but the `osascript` backend
-  does not currently use it for visual differentiation
+- macOS: the level value is accepted by both delivery paths but is not currently
+  used for visual differentiation
 - Linux: `Info -> low`, `Warning -> normal`, `Error -> critical`
+
+### macOS authorization and foreground behavior
+
+App Notification delivery requires macOS 10.14 or later, a stable bundle
+identifier, and an executable hosted inside an `.app` bundle. The first App
+Notification call requests alert authorization when needed. A denial is
+returned as an error and automatic delivery does not bypass it through
+`osascript`.
+
+The library does not replace the host application's
+`UNUserNotificationCenterDelegate`. When the app is in the foreground, the host
+is responsible for choosing presentation options in its delegate.
 
 ## Testing
 
