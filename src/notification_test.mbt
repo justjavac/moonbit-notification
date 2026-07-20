@@ -27,3 +27,16 @@ test "ensure_supported stays in sync with is_supported" {
     Err(_) => assert_true(!supported)
   }
 }
+
+///|
+test "explicit delivery APIs validate before entering native code" {
+  let request = @notification.Notification::new("")
+  assert_true(
+    @notification.show_app_notification(request) ==
+    Err("notification body must not be empty"),
+  )
+  assert_true(
+    @notification.show_cli_notification(request) ==
+    Err("notification body must not be empty"),
+  )
+}

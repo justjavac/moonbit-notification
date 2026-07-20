@@ -14,7 +14,8 @@ The package is intended for MoonBit `native` targets only.
 
 - Windows: uses a native shell notification implementation through
   `IUserNotification`
-- macOS: uses `/usr/bin/osascript`
+- macOS App Notification: uses Apple's UserNotifications framework
+- macOS CLI Notification: uses `/usr/bin/osascript`
 - Linux: uses `notify-send`
 - Other native platforms: compile, but report the platform as unsupported at
   runtime
@@ -28,6 +29,20 @@ let result = @notification.show(
   "Build finished successfully",
   title=Some("CI"),
 )
+```
+
+On macOS, the existing entry points choose the delivery path automatically. An
+identified `.app` uses UserNotifications; an unbundled command-line process uses
+`osascript`. To select a path explicitly, construct a request and call:
+
+```moonbit
+let request = @notification.Notification::new(
+  "Artifacts uploaded",
+  title=Some("Release"),
+)
+
+let app_result = @notification.show_app_notification(request)
+let cli_result = @notification.show_cli_notification(request)
 ```
 
 If you want to construct the request first:
@@ -82,6 +97,12 @@ pub(all) struct Notification {
 - `show_with_window(window_handle, body, title?, level?)`
   Preserves compatibility with call sites that already track a native window
   handle.
+- `show_app_notification(notification)`
+  Uses App Notification delivery on macOS and the platform's normal backend on
+  Windows and Linux.
+- `show_cli_notification(notification)`
+  Uses CLI Notification delivery on macOS and the platform's normal backend on
+  Windows and Linux.
 - `is_supported()`
   Reports whether the current runtime can deliver notifications.
 - `ensure_supported()`
@@ -100,9 +121,21 @@ The repository intentionally keeps behavior predictable across platforms.
 Current urgency mapping:
 
 - Windows: information, warning, and error icon/flag hints
-- macOS: the level value is accepted by the API, but the `osascript` backend
-  does not currently use it for visual differentiation
+- macOS: the level value is accepted by both delivery paths but is not currently
+  used for visual differentiation
 - Linux: `Info -> low`, `Warning -> normal`, `Error -> critical`
+
+### macOS authorization and foreground behavior
+
+App Notification delivery requires macOS 10.14 or later, a stable bundle
+identifier, and an executable hosted inside an `.app` bundle. The first App
+Notification call requests alert authorization when needed. A denial is
+returned as an error and automatic delivery does not bypass it through
+`osascript`.
+
+The library does not replace the host application's
+`UNUserNotificationCenterDelegate`. When the app is in the foreground, the host
+is responsible for choosing presentation options in its delegate.
 
 ## Testing
 

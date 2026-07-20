@@ -12,6 +12,10 @@ pub fn is_supported() -> Bool
 
 pub fn show(String, title? : String?, level? : NotificationLevel) -> Result[Unit, String]
 
+pub fn show_app_notification(Notification) -> Result[Unit, String]
+
+pub fn show_cli_notification(Notification) -> Result[Unit, String]
+
 pub fn show_notification(Notification) -> Result[Unit, String]
 
 pub fn show_with_window(Int64, String, title? : String?, level? : NotificationLevel) -> Result[Unit, String]

@@ -9,6 +9,7 @@ Cross-platform desktop notifications for MoonBit `native` targets.
 
 - One small API for Windows, macOS, and Linux
 - Public entry points: `show`, `show_notification`, `show_with_window`
+- Explicit delivery: `show_app_notification`, `show_cli_notification`
 - Support checks: `is_supported()` and `ensure_supported()`
 
 ## Example
@@ -39,5 +40,8 @@ test "build a notification value" {
 - `body` must not be empty
 - missing or empty titles fall back to `"Lepus"`
 - Windows uses a native shell implementation
-- macOS uses `/usr/bin/osascript`
+- macOS App Notifications use UserNotifications and require an identified `.app`
+- macOS CLI Notifications use `/usr/bin/osascript`
+- automatic macOS delivery selects between those paths without bypassing an
+  authorization denial
 - Linux uses `notify-send`

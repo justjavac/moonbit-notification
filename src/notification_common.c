@@ -83,14 +83,22 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_backend_kind(void) {
  * checks for backend-specific executables.
  */
 MOONBIT_FFI_EXPORT int32_t desktop_notification_is_supported(void) {
+  return desktop_notification_support_status() ==
+         DESKTOP_NOTIFICATION_STATUS_OK;
+}
+
+/* Returns a stable status for the active automatic delivery path. */
+MOONBIT_FFI_EXPORT int32_t desktop_notification_support_status(void) {
 #if defined(_WIN32)
-  return 1;
+  return DESKTOP_NOTIFICATION_STATUS_OK;
 #elif defined(__APPLE__)
-  return desktop_notification_macos_is_supported();
+  return desktop_notification_macos_support_status();
 #elif defined(__linux__)
-  return desktop_notification_linux_is_supported();
+  return desktop_notification_linux_is_supported()
+             ? DESKTOP_NOTIFICATION_STATUS_OK
+             : DESKTOP_NOTIFICATION_STATUS_BACKEND_UNAVAILABLE;
 #else
-  return 0;
+  return DESKTOP_NOTIFICATION_STATUS_UNSUPPORTED;
 #endif
 }
 
@@ -104,17 +112,46 @@ MOONBIT_FFI_EXPORT int32_t desktop_notification_show(
     int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
     int32_t level) {
 #if defined(_WIN32)
-  return desktop_notification_windows_show(window_handle, title, body, level);
+  return desktop_notification_windows_show(window_handle, title, body, level)
+             ? DESKTOP_NOTIFICATION_STATUS_OK
+             : DESKTOP_NOTIFICATION_STATUS_DELIVERY_FAILED;
 #elif defined(__APPLE__)
   return desktop_notification_macos_show(window_handle, title, body, level);
 #elif defined(__linux__)
-  return desktop_notification_linux_show(window_handle, title, body, level);
+  if (!desktop_notification_linux_is_supported()) {
+    return DESKTOP_NOTIFICATION_STATUS_BACKEND_UNAVAILABLE;
+  }
+  return desktop_notification_linux_show(window_handle, title, body, level)
+             ? DESKTOP_NOTIFICATION_STATUS_OK
+             : DESKTOP_NOTIFICATION_STATUS_DELIVERY_FAILED;
 #else
   (void)window_handle;
   (void)title;
   (void)body;
   (void)level;
-  return 0;
+  return DESKTOP_NOTIFICATION_STATUS_UNSUPPORTED;
+#endif
+}
+
+/* Dispatches explicitly through the app-oriented delivery path. */
+MOONBIT_FFI_EXPORT int32_t desktop_notification_show_app(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level) {
+#if defined(__APPLE__)
+  return desktop_notification_macos_show_app(window_handle, title, body, level);
+#else
+  return desktop_notification_show(window_handle, title, body, level);
+#endif
+}
+
+/* Dispatches explicitly through the command-line delivery path. */
+MOONBIT_FFI_EXPORT int32_t desktop_notification_show_cli(
+    int64_t window_handle, moonbit_bytes_t title, moonbit_bytes_t body,
+    int32_t level) {
+#if defined(__APPLE__)
+  return desktop_notification_macos_show_cli(window_handle, title, body, level);
+#else
+  return desktop_notification_show(window_handle, title, body, level);
 #endif
 }
 

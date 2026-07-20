@@ -9,6 +9,13 @@
 /// notification. It returns `true` only when the active backend believes a
 /// delivery attempt can be made right now.
 ///
+/// On macOS the probe follows the same automatic selection as `show`: an
+/// identified app checks its UserNotifications authorization state, while an
+/// unbundled command-line process checks for `/usr/bin/osascript`. A user who
+/// has denied App Notification authorization makes this function return `false`;
+/// a not-yet-determined authorization still returns `true` because `show` may
+/// request it.
+///
 /// # Example
 /// ```mbt check
 /// test "is_supported probes capability without delivering" {

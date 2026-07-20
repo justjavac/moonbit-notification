@@ -12,11 +12,13 @@
 /// - It dispatches the normalized request to the platform backend:
 ///
 /// - Windows uses a native shell notification implementation.
-/// - macOS uses `/usr/bin/osascript`.
+/// - macOS uses UserNotifications for an identified app and `/usr/bin/osascript`
+///   for an unbundled command-line process.
 /// - Linux uses `notify-send`.
 ///
-/// The MoonBit layer selects the concrete backend during compilation with
-/// `#cfg(platform=...)`.
+/// The shared native dispatcher selects the concrete platform backend during
+/// compilation. On macOS it selects the delivery path at runtime from the host
+/// application identity.
 ///
 /// Returns `Ok(())` when the backend reports a successful delivery attempt.
 /// Returns `Err(...)` when notifications are unsupported on the current
@@ -34,6 +36,55 @@
 /// ```
 pub fn show_notification(notification : Notification) -> Result[Unit, String] {
   show_notification_with_window(0, notification)
+}
+
+///|
+/// Displays an App Notification from a complete request value.
+///
+/// On macOS this uses `UNUserNotificationCenter` and requires a host `.app` with
+/// a stable bundle identifier. The first call requests alert authorization when
+/// the user has not made a choice yet. A denied authorization is returned as an
+/// error and is never bypassed through the CLI delivery path.
+///
+/// Windows and Linux currently have one delivery backend each, so this function
+/// uses the same backend as `show_notification` on those platforms.
+///
+/// The host application remains responsible for foreground presentation through
+/// its own notification center delegate.
+///
+/// # Example
+/// ```mbt nocheck
+/// let request = @notification.Notification::new("Build finished")
+/// let _ = @notification.show_app_notification(request)
+/// ```
+pub fn show_app_notification(
+  notification : Notification,
+) -> Result[Unit, String] {
+  match prepare_notification(notification) {
+    Err(error) => Err(error)
+    Ok((title, body)) => backend_deliver_app(0, title, body, notification.level)
+  }
+}
+
+///|
+/// Displays a CLI Notification from a complete request value.
+///
+/// On macOS this explicitly uses `/usr/bin/osascript`, making it suitable for an
+/// unbundled command-line program with no stable application identity. Windows
+/// and Linux currently use their normal platform backend.
+///
+/// # Example
+/// ```mbt nocheck
+/// let request = @notification.Notification::new("Build finished")
+/// let _ = @notification.show_cli_notification(request)
+/// ```
+pub fn show_cli_notification(
+  notification : Notification,
+) -> Result[Unit, String] {
+  match prepare_notification(notification) {
+    Err(error) => Err(error)
+    Ok((title, body)) => backend_deliver_cli(0, title, body, notification.level)
+  }
 }
 
 ///|
