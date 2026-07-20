@@ -34,11 +34,14 @@ test "all delivery paths succeed in dry-run mode" {
     title=Some(default_title()),
     level=Warning,
   )
-  let app_result = show_app_notification(
+  let app_result = show_notification(
     Notification::new("App build finished", title=Some(default_title())),
+    delivery=App,
   )
-  let cli_result = show_cli_notification(
-    Notification::new("CLI build finished", title=Some(default_title())),
+  let cli_result = show(
+    "CLI build finished",
+    title=Some(default_title()),
+    delivery=Cli,
   )
   notification_set_dry_run_ffi(false)
 

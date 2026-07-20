@@ -209,3 +209,19 @@ fn backend_deliver_cli(
     Err(delivery_error(status))
   }
 }
+
+///|
+/// Dispatches through the delivery path selected by the caller.
+fn backend_deliver_with_mode(
+  window_handle : Int64,
+  title : String,
+  body : String,
+  level : NotificationLevel,
+  delivery : NotificationDelivery,
+) -> Result[Unit, String] {
+  match delivery {
+    Auto => backend_deliver(window_handle, title, body, level)
+    App => backend_deliver_app(window_handle, title, body, level)
+    Cli => backend_deliver_cli(window_handle, title, body, level)
+  }
+}

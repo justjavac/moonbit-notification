@@ -9,7 +9,7 @@ Cross-platform desktop notifications for MoonBit `native` targets.
 
 - One small API for Windows, macOS, and Linux
 - Public entry points: `show`, `show_notification`, `show_with_window`
-- Explicit delivery: `show_app_notification`, `show_cli_notification`
+- Optional delivery mode: `Auto`, `App`, or `Cli`
 - Support checks: `is_supported()` and `ensure_supported()`
 
 ## Example

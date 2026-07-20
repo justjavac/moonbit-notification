@@ -33,16 +33,20 @@ let result = @notification.show(
 
 On macOS, the existing entry points choose the delivery path automatically. An
 identified `.app` uses UserNotifications; an unbundled command-line process uses
-`osascript`. To select a path explicitly, construct a request and call:
+`osascript`. Use the optional `delivery` argument to select a path explicitly:
 
 ```moonbit
-let request = @notification.Notification::new(
+let app_result = @notification.show(
   "Artifacts uploaded",
   title=Some("Release"),
+  delivery=@notification.App,
 )
 
-let app_result = @notification.show_app_notification(request)
-let cli_result = @notification.show_cli_notification(request)
+let cli_result = @notification.show(
+  "Artifacts uploaded",
+  title=Some("Release"),
+  delivery=@notification.Cli,
+)
 ```
 
 If you want to construct the request first:
@@ -78,6 +82,12 @@ let result = @notification.show_with_window(
 - `Warning`
 - `Error`
 
+`NotificationDelivery` selects a delivery path:
+
+- `Auto` (default)
+- `App`
+- `Cli`
+
 `Notification` is the immutable request type used by the public API:
 
 ```moonbit
@@ -90,19 +100,13 @@ pub(all) struct Notification {
 
 ### Functions
 
-- `show(body, title?, level?)`
+- `show(body, title?, level?, delivery?)`
   Sends a notification from raw fields.
-- `show_notification(notification)`
+- `show_notification(notification, delivery?)`
   Sends a pre-built `Notification`.
-- `show_with_window(window_handle, body, title?, level?)`
+- `show_with_window(window_handle, body, title?, level?, delivery?)`
   Preserves compatibility with call sites that already track a native window
   handle.
-- `show_app_notification(notification)`
-  Uses App Notification delivery on macOS and the platform's normal backend on
-  Windows and Linux.
-- `show_cli_notification(notification)`
-  Uses CLI Notification delivery on macOS and the platform's normal backend on
-  Windows and Linux.
 - `is_supported()`
   Reports whether the current runtime can deliver notifications.
 - `ensure_supported()`
@@ -116,6 +120,7 @@ The repository intentionally keeps behavior predictable across platforms.
 - `title` is optional
 - missing or empty titles fall back to `"Lepus"`
 - urgency is mapped from `NotificationLevel` into backend-specific values
+- delivery defaults to `Auto`; `App` and `Cli` select a path explicitly
 - validation happens in MoonBit before native delivery is attempted
 
 Current urgency mapping:
