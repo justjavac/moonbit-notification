@@ -1,6 +1,6 @@
 name = "justjavac/notification"
 
-version = "0.1.4"
+version = "0.1.5"
 
 readme = "README.mbt.md"
 
