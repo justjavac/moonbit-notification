@@ -14,7 +14,8 @@ description = "Cross-platform native desktop notification helpers for MoonBit."
 
 preferred_target = "native"
 
+source = "src"
+
 options(
-  source: "src",
   supported_targets: "+native",
 )
